@@ -64,9 +64,25 @@ abstract class Message implements MessageInterface
     /**
      * {@inheritdoc}
      */
+    public function getCookies()
+    {
+        // TODO
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function hasHeader($name)
     {
         return array_key_exists(strtolower($name), $this->headerNameMap);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasCookie($name)
+    {
+        // TODO
     }
 
     /**
@@ -83,6 +99,14 @@ abstract class Message implements MessageInterface
         $name = $this->headerNameMap[$name];
 
         return $this->headers[$name];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCookie($name)
+    {
+        // TODO
     }
 
     /**
@@ -125,6 +149,16 @@ abstract class Message implements MessageInterface
     /**
      * {@inheritdoc}
      */
+    public function withCookie($name, $value, $expire = 0, $path = '', $domain = '', $secure = false, $httpOnly = false)
+    {
+        // TODO
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function withAddedHeader($name, $value)
     {
         $new = clone $this;
@@ -138,6 +172,16 @@ abstract class Message implements MessageInterface
     {
         $new = clone $this;
         return $new->removeHeader($name);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function withoutCookie($name)
+    {
+        // TODO
+
+        return $this;
     }
 
     /**

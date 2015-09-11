@@ -112,6 +112,12 @@ class MessageTest extends TestCase
         $this->assertSame([], $message->getHeaders());
     }
 
+    public function testGetCookiesWhenNoCookiesProvided() {
+        $message = $this->createMessage();
+
+        $this->assertSame([], $message->getCookies());
+    }
+
     public function testHeaderCreationWithArrayOfStrings()
     {
         $headers = [
@@ -131,6 +137,15 @@ class MessageTest extends TestCase
         return $message;
     }
 
+    public function testCookieCreation()
+    {
+        $message = $this->createMessage();
+
+        $this->assertEquals(["foo" => "bar"], $message->withCookie("foo", "bar")->getCookies());
+
+        return $message;
+    }
+
     /**
      * @depends testHeaderCreationWithArrayOfStrings
      * @param \Icicle\Http\Message\Message $message
@@ -144,6 +159,17 @@ class MessageTest extends TestCase
     }
 
     /**
+     * @depends testCookieCreation
+     *
+     * @param \Icicle\Http\Message\Message $message
+     */
+    public function testHasCookieCaseInsensitive($message)
+    {
+        $this->assertTrue($message->hasCookie('foo'));
+        $this->assertTrue($message->hasCookie('FOO'));
+    }
+
+    /**
      * @depends testHeaderCreationWithArrayOfStrings
      * @param \Icicle\Http\Message\Message $message
      */
@@ -153,6 +179,27 @@ class MessageTest extends TestCase
         $this->assertSame(['example.com:80'], $message->getHeader('host'));
         $this->assertSame(['close'], $message->getHeader('connection'));
         $this->assertSame(['close'], $message->getHeader('CONNECTION'));
+    }
+
+    public function testCookieDecode()
+    {
+        $this->markTestIncomplete();
+    }
+
+    public function testCookieEncode()
+    {
+        $this->markTestIncomplete();
+    }
+
+    /**
+     * @depends testCookieCreation
+     *
+     * @param \Icicle\Http\Message\Message $message
+     */
+    public function testGetCookieCaseInsensitive($message)
+    {
+        $this->assertSame(['bar'], $message->getCookie('foo'));
+        $this->assertSame(['bar'], $message->getCookie('FOO'));
     }
 
     /**
@@ -174,6 +221,14 @@ class MessageTest extends TestCase
         $this->assertFalse($message->hasHeader('Connection'));
         $this->assertSame([], $message->getHeader('Connection'));
         $this->assertSame('', $message->getHeaderLine('Connection'));
+    }
+
+    public function testNonExistentCookie()
+    {
+        $message = $this->createMessage();
+
+        $this->assertFalse($message->hasCookie('foo'));
+        $this->assertSame(null, $message->getCookie('foo'));
     }
 
     public function testHeaderCreationWithArrayOfArrayOfStrings()
@@ -239,6 +294,18 @@ class MessageTest extends TestCase
         $this->assertNotSame($message, $new);
         $this->assertSame('text/html', $new->getHeaderLine('Accept'));
         $this->assertSame('', $message->getHeaderLine('Accept'));
+
+        return $new;
+    }
+
+    public function testWithCookie()
+    {
+        $old = $this->createMessage();
+        $new = $old->withCookie('foo', 'bar');
+
+        $this->assertNotSame($old, $new);
+        $this->assertSame('bar', $new->getCookie('foo'));
+        $this->assertSame(null, $old->getCookie('foo'));
 
         return $new;
     }
@@ -428,6 +495,18 @@ class MessageTest extends TestCase
     }
 
     /**
+     * @depends testWithCookie
+     *
+     * @param \Icicle\Http\Message\Message $message
+     */
+    public function testWithoutCookie($message)
+    {
+        $new = $message->withoutCookie('foo');
+
+        $this->assertSame([], $new->getCookies());
+    }
+
+    /**
      * @depends testWithHeader
      * @param \Icicle\Http\Message\Message $message
      */
@@ -436,6 +515,18 @@ class MessageTest extends TestCase
         $new = $message->withoutHeader('ACCEPT');
 
         $this->assertSame([], $new->getHeaders());
+    }
+
+    /**
+     * @depends testWithCookie
+     *
+     * @param \Icicle\Http\Message\Message $message
+     */
+    public function testWithoutCookieIsCaseInsensitive($message)
+    {
+        $new = $message->withoutCookie('FOO');
+
+        $this->assertSame([], $new->getCookies());
     }
 
     /**

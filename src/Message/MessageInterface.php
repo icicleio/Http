@@ -40,6 +40,32 @@ interface MessageInterface
     public function getHeader($name);
 
     /**
+     * Returns the message cookies as a string-indexed array of strings or an empty array if no
+     * cookies have been set.
+     *
+     * @return string[]
+     */
+    public function getCookies();
+
+    /**
+     * Determines if the message has the given cookie.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasCookie($name);
+
+    /**
+     * Returns the value for the given cookie or null if the cookie does not exist.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function getCookie($name);
+
+    /**
      * Returns the values for the given header as a comma separated list. Returns an empty string if the the header
      * does not exit.
      * Note that not all headers can be accurately represented as a comma-separated list.
@@ -99,6 +125,30 @@ interface MessageInterface
      * @return static
      */
     public function withoutHeader($name);
+
+    /**
+     * Returns a new instance with the given cookie.
+     *
+     * @param string $name
+     * @param mixed  $value
+     * @param int    $expire
+     * @param string $path
+     * @param string $domain
+     * @param bool   $secure
+     * @param bool   $httpOnly
+     *
+     * @return static
+     */
+    public function withCookie($name, $value, $expire = 0, $path = '', $domain = '', $secure = false, $httpOnly = false);
+
+    /**
+     * Returns a new instance without the given cookie.
+     *
+     * @param string $name
+     *
+     * @return static
+     */
+    public function withoutCookie($name);
 
     /**
      * Returns a new instance with the given stream for the message body.
