@@ -24,6 +24,21 @@ abstract class Message implements MessageInterface
     private $headers = [];
 
     /**
+     * @var string[]
+     */
+    private $cookieNameMap = [];
+
+    /**
+     * @var string[]
+     */
+    private $cookies = [];
+
+    /**
+     * @var string[]
+     */
+    private $formattedCookies = [];
+
+    /**
      * @var \Icicle\Stream\ReadableStreamInterface
      */
     private $stream;
@@ -66,7 +81,7 @@ abstract class Message implements MessageInterface
      */
     public function getCookies()
     {
-        // TODO
+        return $this->cookies;
     }
 
     /**
@@ -82,7 +97,7 @@ abstract class Message implements MessageInterface
      */
     public function hasCookie($name)
     {
-        // TODO
+        return array_key_exists(strtolower($name), $this->cookieNameMap);
     }
 
     /**
@@ -106,7 +121,15 @@ abstract class Message implements MessageInterface
      */
     public function getCookie($name)
     {
-        // TODO
+        $name = strtolower($name);
+
+        if (!array_key_exists($name, $this->cookieNameMap)) {
+            return null;
+        }
+
+        $name = $this->cookieNameMap[$name];
+
+        return $this->cookies[$name];
     }
 
     /**
@@ -151,9 +174,70 @@ abstract class Message implements MessageInterface
      */
     public function withCookie($name, $value, $expire = 0, $path = '', $domain = '', $secure = false, $httpOnly = false)
     {
-        // TODO
+        $new = clone $this;
 
-        return $this;
+        $name = trim($name);
+        $value = trim($value);
+
+        $normalized = strtolower($name);
+
+        $new->cookies[$name] = $value;
+        $new->formattedCookies[$name] = $this->formatCookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
+
+        $new->cookieNameMap[$normalized] = $name;
+
+        $new->setHeader("Set-Cookie", $new->formattedCookies);
+
+        return $new;
+    }
+
+    /**
+     * Formats cookie details as a header string.
+     *
+     * @param string     $name
+     * @param string     $value
+     * @param int        $expire
+     * @param string     $path
+     * @param string     $domain
+     * @param bool|false $secure
+     * @param bool|false $httpOnly
+     *
+     * @return string
+     */
+    protected function formatCookie($name, $value, $expire = 0, $path = '', $domain = '', $secure = false, $httpOnly = false) {
+        // This code comes from https://github.com/symfony/http-foundation
+        // Copyright (c) 2004-2015 Fabien Potencier
+        // Much love! <3
+
+        $formatted = urlencode($name).'=';
+
+        if ('' === (string) $value) {
+            $formatted .= 'deleted; expires='.gmdate('D, d-M-Y H:i:s T', time() - 31536001);
+        } else {
+            $formatted .= urlencode($value);
+
+            if ($expire !== 0) {
+                $formatted .= '; expires='.gmdate('D, d-M-Y H:i:s T', $expire);
+            }
+        }
+
+        if ($path) {
+            $formatted .= '; path='.$path;
+        }
+
+        if ($domain) {
+            $formatted .= '; domain='.$domain;
+        }
+
+        if (true === $secure) {
+            $formatted .= '; secure';
+        }
+
+        if (true === $httpOnly) {
+            $formatted .= '; httponly';
+        }
+
+        return $formatted;
     }
 
     /**
@@ -179,9 +263,16 @@ abstract class Message implements MessageInterface
      */
     public function withoutCookie($name)
     {
-        // TODO
+        $new = clone $this;
 
-        return $this;
+        $normalized = strtolower($name);
+
+        if (array_key_exists($normalized, $new->cookieNameMap)) {
+            $name = $new->cookieNameMap[$normalized];
+            unset($new->cookies[$name], $new->cookieNameMap[$normalized]);
+        }
+
+        return $new;
     }
 
     /**
@@ -271,6 +362,10 @@ abstract class Message implements MessageInterface
             throw new InvalidHeaderException('Header name is invalid.');
         }
 
+        if (strtolower($name) === "cookie") {
+            $this->setCookies($value);
+        }
+
         $normalized = strtolower($name);
         $value = $this->filterHeader($value);
 
@@ -280,6 +375,37 @@ abstract class Message implements MessageInterface
         } else {
             $this->headerNameMap[$normalized] = $name;
             $this->headers[$name] = $value;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Splits a cookie value and sets cookies in internal storage.
+     *
+     * @param array|string $value
+     *
+     * @return $this
+     */
+    protected function setCookies($values) {
+        if (!is_array($values)) {
+            $values = [$values];
+        }
+
+        foreach ($values as $value) {
+            $cookies = explode(";", $value);
+
+            foreach ($cookies as $cookie) {
+                list($key, $value) = explode("=", $cookie);
+
+                $key = trim($key);
+                $value = trim($value);
+
+                $normalized = strtolower($key);
+
+                $this->cookieNameMap[$normalized] = $key;
+                $this->cookies[$key] = $value;
+            }
         }
 
         return $this;

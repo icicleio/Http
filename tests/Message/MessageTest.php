@@ -141,9 +141,16 @@ class MessageTest extends TestCase
     {
         $message = $this->createMessage();
 
-        $this->assertEquals(["foo" => "bar"], $message->withCookie("foo", "bar")->getCookies());
+        $new = $message->withCookie("foo", "bar");
 
-        return $message;
+        $this->assertNotSame($new, $message);
+
+        $this->assertEquals(
+            ["foo" => "bar"],
+            $new->getCookies()
+        );
+
+        return $new;
     }
 
     /**
@@ -183,12 +190,35 @@ class MessageTest extends TestCase
 
     public function testCookieDecode()
     {
-        $this->markTestIncomplete();
+        $message = $this->createMessage(null, [
+            "Cookie" => "name1 = value1; name2=value2"
+        ]);
+
+        $this->assertEquals(
+            ["name1" => "value1", "name2" => "value2"],
+            $message->getCookies()
+        );
     }
 
     public function testCookieEncode()
     {
-        $this->markTestIncomplete();
+        $message = $this->createMessage();
+
+        $time = time() + 100;
+
+        $new = $message
+            ->withCookie("foo", "bar", $time, "/", "example.com", true, true)
+            ->withCookie("bar", "baz");
+
+        $this->assertNotSame($new, $message);
+
+        $this->assertEquals(
+            [
+                "foo=bar; expires=" . gmdate('D, d-M-Y H:i:s T', $time) . "; path=/; domain=example.com; secure; httponly",
+                "bar=baz",
+            ],
+            $new->getHeader("Set-Cookie")
+        );
     }
 
     /**
@@ -198,8 +228,10 @@ class MessageTest extends TestCase
      */
     public function testGetCookieCaseInsensitive($message)
     {
-        $this->assertSame(['bar'], $message->getCookie('foo'));
-        $this->assertSame(['bar'], $message->getCookie('FOO'));
+        $this->assertSame(null, $message->getCookie('baz'));
+
+        $this->assertSame('bar', $message->getCookie('foo'));
+        $this->assertSame('bar', $message->getCookie('FOO'));
     }
 
     /**
@@ -502,6 +534,8 @@ class MessageTest extends TestCase
     public function testWithoutCookie($message)
     {
         $new = $message->withoutCookie('foo');
+
+        $this->assertNotSame($new, $message);
 
         $this->assertSame([], $new->getCookies());
     }
