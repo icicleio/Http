@@ -48,7 +48,7 @@ class ExampleRequestHandler implements RequestHandler
             'Content-Length' => $sink->getLength(),
         ], $sink);
 
-        return $response;
+        yield $response;
     }
 
     /**
@@ -59,7 +59,7 @@ class ExampleRequestHandler implements RequestHandler
      */
     public function onError(int $code, Socket $socket): Response
     {
-        return new BasicResponse($code);
+        yield new BasicResponse($code);
     }
 }
 
