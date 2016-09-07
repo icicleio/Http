@@ -24,6 +24,17 @@ class BasicUriTest extends TestCase
                 'fragment-value',
             ],
             [
+                'http://example.com?foo=value1+value2',
+                'http',
+                '',
+                '',
+                'example.com',
+                80,
+                '',
+                ['foo' => ['value1 value2']],
+                '',
+            ],
+            [
                 'http://example.com/path',
                 'http',
                 '',

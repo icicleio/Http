@@ -444,7 +444,7 @@ class BasicUri implements Uri
             $data[] = '';
         }
 
-        return array_map(__NAMESPACE__ . '\decode', $data);
+        return array_map('urldecode', $data);
     }
 
     /**
